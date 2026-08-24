@@ -17,6 +17,7 @@
 
 /**
  * Auto-loads the DODHooks extension whenever a plugin includes this file.
+ * autoload is hardcoded to 1 — no AUTOLOAD_EXTENSIONS define needed.
  *
  * IMPORTANT: The "file" field must be the BASE name "dodhooks.ext" —
  * SourceMod automatically appends the game-specific suffix (.2.dods)
@@ -27,11 +28,7 @@ public Extension __ext_dodhooks =
 {
     name = "DODHooks",
     file = "dodhooks.ext",
-#if defined AUTOLOAD_EXTENSIONS
     autoload = 1,
-#else
-    autoload = 0,
-#endif
 #if defined REQUIRE_EXTENSIONS
     required = 1,
 #else
