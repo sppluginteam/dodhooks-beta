@@ -42,7 +42,7 @@
 #define SMEXT_CONF_VERSION         "1.6.1"
 #define SMEXT_CONF_AUTHOR          "Andersso, ChesterSmitty, Apfelwurm, DNA-styx, Kittenks"
 #define SMEXT_CONF_URL             "https://github.com/kittenks/dodhooks"
-#define SMEXT_CONF_LOGTAG          "DODHOOKS"
+#define SMEXT_CONF_LOGTAG          "DODHOOKS-beta"
 #define SMEXT_CONF_LICENSE         "GPLv2"
 #define SMEXT_CONF_DATESTRING      __DATE__
 
