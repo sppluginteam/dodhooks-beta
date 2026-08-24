@@ -39,10 +39,10 @@
 
 #define SMEXT_CONF_NAME            "DODHooks"
 #define SMEXT_CONF_DESCRIPTION     "SourceMod extension with Detours & Natives for Day of Defeat: Source"
-#define SMEXT_CONF_VERSION         "1.6.1"
+#define SMEXT_CONF_VERSION         "1.6.2"
 #define SMEXT_CONF_AUTHOR          "Andersso, ChesterSmitty, Apfelwurm, DNA-styx, Kittenks"
 #define SMEXT_CONF_URL             "https://github.com/kittenks/dodhooks"
-#define SMEXT_CONF_LOGTAG          "DODHOOKS-beta"
+#define SMEXT_CONF_LOGTAG          "DODHOOKS"
 #define SMEXT_CONF_LICENSE         "GPLv2"
 #define SMEXT_CONF_DATESTRING      __DATE__
 
@@ -61,6 +61,16 @@
  * @brief Enables the game helpers interface (g_pGameHelpers / IGameHelpers).
  */
 #define SMEXT_ENABLE_GAMEHELPERS
+
+/**
+ * @brief Enables the library system interface (g_pLibSys / ILibrarySys).
+ */
+#define SMEXT_ENABLE_LIBSYS
+
+/**
+ * @brief Enables the plugin system interface (g_pPluginSys / IPluginManager).
+ */
+#define SMEXT_ENABLE_PLUGINSYS
 
 /**
  * @brief Declares this extension as a Metamod:Source plugin so that the
