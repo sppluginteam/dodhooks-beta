@@ -13,7 +13,7 @@
 #include "natives.h"
 
 CDODHooks g_Interface;
-SMEXT_LINK(&g_Interface)
+SMEXT_LINK(&g_Interface);
 
 /* Detour pointers */
 CDetour *g_pDetVoiceCommand     = NULL;
