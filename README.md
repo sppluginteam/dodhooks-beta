@@ -223,6 +223,7 @@ addons/
 ### Loading the extension
 **Warning** Urgently Needs Fixing Extension Loading Issue 
 At present, there is no definitive solution to the issue of dodhooks failing to load properly; the temporary workaround is to enter the command sm exts load dodhooks.ext.2.dods in server.cfg.
+
 The extension is **auto-loaded** automatically: any plugin that
 `#include <dodhooks>` triggers SourceMod to load `dodhooks.ext` (resolved to
 `dodhooks.ext.2.dods`) at runtime. This is wired up by the
