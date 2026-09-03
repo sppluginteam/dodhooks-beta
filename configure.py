@@ -4,7 +4,7 @@ DODHooks - Configure script
 
 Supports:
   - SourceMod 1.12 / 1.13
-  - Metamod:Source 1.12 / 1.13
+  - Metamod:Source 1.12 / 2.0
   - 32-bit (x86) builds for Day of Defeat: Source
 """
 
