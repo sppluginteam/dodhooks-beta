@@ -58,6 +58,10 @@ public __ext_dodhooks_SetNTVOptional()
     MarkNativeAsOptional("DOD_SetRoundState");
     MarkNativeAsOptional("DOD_SetPlayerState");
     MarkNativeAsOptional("DOD_SetBombTargetState");
+    MarkNativeAsOptional("DOD_IsAvailable");
+    MarkNativeAsOptional("DOD_GetDetourCount");
+    MarkNativeAsOptional("DOD_GetDetourTotal");
+    MarkNativeAsOptional("DOD_IsObjectiveResourceReady");
 }
 #endif
 
@@ -69,17 +73,28 @@ public __ext_dodhooks_SetNTVOptional()
 
 /**
  * Player class constants
+ *
+ * IMPORTANT - these must match the game's own values (see DODPlayerClass in
+ * extension.h). Verified against the current server binary:
+ * HandleCommand_JoinClass() tests the incoming class against -2 for "random",
+ * and valid classes run 0..5.
+ *
+ * A previous revision declared DODClass_None = 0 / DODClass_Rifleman = 1,
+ * which is off by one and shifts every class (Assault reported as Support,
+ * SetPlayerClass rejected, etc.). Do not re-introduce that numbering.
  */
 enum DODPlayerClass
 {
     DODClass_Random       = -2,
-    DODClass_None         = 0,
-    DODClass_Rifleman     = 1,
-    DODClass_Assault      = 2,
-    DODClass_Support      = 3,
-    DODClass_Sniper       = 4,
-    DODClass_Machinegunner = 5,
-    DODClass_Rocket       = 6,
+    DODClass_None         = -1,
+    DODClass_Rifleman     = 0,
+    DODClass_Assault      = 1,
+    DODClass_Support      = 2,
+    DODClass_Sniper       = 3,
+    DODClass_Machinegunner = 4,
+    DODClass_Rocket       = 5,
+
+    DODClass_Size
 };
 
 /**
@@ -380,6 +395,43 @@ native bool DOD_SetPlayerState(int client, DODPlayerState state);
  * @error           Invalid entity index.
  */
 native bool DOD_SetBombTargetState(int entity, DODBombTargetState state);
+
+/**
+ * ============================================================
+ * DIAGNOSTICS
+ * ============================================================
+ */
+
+/**
+ * Always returns true when the extension is loaded.
+ *
+ * Use this to tell "extension not loaded at all" apart from
+ * "extension loaded but gamedata/detours broken":
+ *   GetFeatureStatus(FeatureType_Native, "DOD_IsAvailable")
+ */
+native bool DOD_IsAvailable();
+
+/**
+ * Number of detours that were successfully created and enabled.
+ *
+ * @return          Active detour count (0 if none could be installed).
+ */
+native int DOD_GetDetourCount();
+
+/**
+ * Total number of detours the extension attempted to create.
+ *
+ * @return          active + failed detour count.
+ */
+native int DOD_GetDetourTotal();
+
+/**
+ * True once g_pObjectiveResource has been resolved and points at a live
+ * dod_objective_resource entity (only true after a map has loaded).
+ *
+ * @return          True when the objective resource is usable.
+ */
+native bool DOD_IsObjectiveResourceReady();
 
 /**
  * ============================================================
