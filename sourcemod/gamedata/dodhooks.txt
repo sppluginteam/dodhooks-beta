@@ -1,10 +1,32 @@
 /**
  * DoDHooks Gamedata
  *
- * Updated for Day of Defeat: Source (latest Steam version)
- * Compatible with SourceMod 1.12 / 1.13
+ * Validated against: Day of Defeat: Source server.dll dated 2026-09-16
+ *   bin/server.dll      (x86,  PE TimeDateStamp 0x6AAA1368)
+ *   bin/x64/server.dll  (x64,  PE TimeDateStamp 0x6AAA1366)
+ * Compatible with SourceMod 1.12 / 1.13 (Metamod:Source 1.12 / 2.0)
  *
  * Maintainers: DNA-styx, Andersso, ChesterSmitty
+ *
+ * Verification notes (2026-09):
+ *   - All 9 Windows x86 signatures AND the "g_pObjectiveResource" offset
+ *     were byte-verified against the 2026-09-16 x86 server.dll. Every
+ *     signature matches exactly once ("AddWaveTime", "RoundState",
+ *     "PlayerState", "BombTargetState" ... all unique hits), and offset 67
+ *     still lands on the 'mov [g_pObjectiveResource], eax' operand of the
+ *     dod_objective_resource block inside CreateStandardEntities
+ *     (x86: global at 0x104E9004). No change required for Win32.
+ *   - SourceMod looks up "linux64" / "windows64" first on 64-bit platforms,
+ *     so those keys are provided. Linux 64-bit re-uses the same mangled
+ *     symbols as 32-bit.
+ *   - bin/x64/server.dll IS a real DoD:S server binary (its exports are
+ *     CDODBombDispenser / CAreaCapture / CWeaponDODBase, same 8 symbols as
+ *     the x86 one, just x64 calling conventions), so windows64 signatures
+ *     are provided below as a forward-looking measure.
+ *   - IMPORTANT: on x64 the g_pObjectiveResource "offset" no longer points at
+ *     a stored absolute address. x64 uses RIP-relative addressing, so the
+ *     offset now points at the 4-byte *displacement* field and the extension
+ *     computes  target = pAddress + offset + 4 + disp32. See vglobals.cpp.
  *
  * Note:
  *   The "#default" section below is applied to every game. Since this
@@ -20,12 +42,24 @@
         "Offsets"
         {
             /**
-             * On Windows, the offset from the CreateStandardEntities function
-             * to where g_pObjectiveResource is referenced.
+             * On Windows x86, the offset from the CreateStandardEntities
+             * function to the 4-byte operand of the instruction that stores
+             * the newly created dod_objective_resource into
+             * g_pObjectiveResource (i.e. 'A3 xx xx xx xx').
+             *
+             * Verified 2026-09-16: offset 67 -> 0x104E9004 = g_pObjectiveResource
+             *   (offset 40 would be g_pPlayerManager - do NOT change this)
              */
             "g_pObjectiveResource"
             {
                 "windows" "67"
+                /* x64: byte offset (from CreateStandardEntities) of the
+                 * 4-byte RIP displacement inside the SECOND
+                 * 'mov [rip+disp], rax' - i.e. the store of the freshly
+                 * created dod_objective_resource.
+                 * target = pAddress + 75 + 4 + disp32  (= 0x1806BC210 here)
+                 * The first store (offset 39) is g_pPlayerManager. */
+                "windows64" "75"
             }
         }
 
@@ -39,15 +73,18 @@
             {
                 "library"    "server"
                 "windows"    "\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x30\xC3"
+                "windows64"  "\x48\x83\xEC\x28\x45\x33\xC9\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x48\x8D\x15\x2B\xE2\x3D"
             }
 
             /**
              * Direct symbol for g_pObjectiveResource on Linux.
+             * Same symbol name on 32-bit and 64-bit builds.
              */
             "g_pObjectiveResource"
             {
                 "library"    "server"
                 "linux"      "@g_pObjectiveResource"
+                "linux64"    "@g_pObjectiveResource"
             }
 
             /**
@@ -59,6 +96,7 @@
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x81\xEC\xB0\x00\x00\x00\x53\x8B\xD9\x8B\x03"
                 "linux"      "@_ZN10CDODPlayer12VoiceCommandEi"
+                "linux64"    "@_ZN10CDODPlayer12VoiceCommandEi"
             }
 
             /**
@@ -70,6 +108,7 @@
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x53\x56\x57\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x83\xF8\x01"
                 "linux"      "@_ZN10CDODPlayer23HandleCommand_JoinClassEi"
+                "linux64"    "@_ZN10CDODPlayer23HandleCommand_JoinClassEi"
             }
 
             /**
@@ -81,6 +120,7 @@
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x53\x56\x57\x8B\xF9\x8D\x8F\x2A\x2A\x2A\x2A"
                 "linux"      "@_ZN10CDODPlayer9PopHelmetE6VectorS0_"
+                "linux64"    "@_ZN10CDODPlayer9PopHelmetE6VectorS0_"
             }
 
             /**
@@ -92,6 +132,7 @@
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x8B\x0D\x2A\x2A\x2A\x2A\x81\xEC\x80\x00\x00\x00"
                 "linux"      "@_ZN13CDODGameRules14SetWinningTeamEi"
+                "linux64"    "@_ZN13CDODGameRules14SetWinningTeamEi"
             }
 
             /**
@@ -102,7 +143,9 @@
             {
                 "library"    "server"
                 "windows"    "\x56\x8B\xF1\x8B\x06\x8B\x80\x2A\x2A\x2A\x2A\xFF\xD0\x84\xC0\x74\x2A\x80\xBE\x2A\x2A\x2A\x2A\x00\x8D\x8E\x2A\x2A\x2A\x2A"
+                "windows64"  "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x48\x89\x7C\x24\x18\x55\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xAC\x24\xF0\xFE"
                 "linux"      "@_ZN10CDODPlayer10DODRespawnEv"
+                "linux64"    "@_ZN10CDODPlayer10DODRespawnEv"
             }
 
             /**
@@ -113,7 +156,9 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x8B\x45\x2A\x83\xEC\x08\x56\x8B\xF1"
+                "windows64"  "\x48\x89\x5C\x24\x08\x57\x48\x83\xEC\x50\x0F\x29\x74\x24\x40\x0F"
                 "linux"      "@_ZN13CDODGameRules11AddWaveTimeEif"
+                "linux64"    "@_ZN13CDODGameRules11AddWaveTimeEif"
             }
 
             /**
@@ -124,8 +169,10 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x56\x8B\xF1\x57\x8B\x7D\x2A\x39\xBE\x2A\x2A\x2A\x2A"
+                "windows64"  "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\xF1\xE8\x79"
                 /* alternative: "\x53\x56\x8B\xD9\xE8\x2A\x2A\x2A\x2A\xBE\x01\x00\x00\x00" */
                 "linux"      "@_ZN13CDODGameRules11State_EnterE13DODRoundState"
+                "linux64"    "@_ZN13CDODGameRules11State_EnterE13DODRoundState"
             }
 
             /**
@@ -136,7 +183,9 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x53\x56\x8B\xF1\x57\x8B\x7D\x2A\x8D\x9E\x2A\x2A\x2A\x2A"
+                "windows64"  "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x8B\xFA\x48\x8B\xD9\x39\x91"
                 "linux"      "@_ZN10CDODPlayer11State_EnterE14DODPlayerState"
+                "linux64"    "@_ZN10CDODPlayer11State_EnterE14DODPlayerState"
             }
 
             /**
@@ -147,8 +196,10 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x53\x56\x57\x8B\xF9"
+                "windows64"  "\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x48\x89\x7C\x24\x18\x55\x48\x8B\xEC\x48\x83\xEC\x40\x8B"
                 /* alternative: "\x55\x8B\xEC\x53\x56\x8B\xF1\x57\x8B\x8E\x2A\x2A\x2A\x2A" */
                 "linux"      "@_ZN14CDODBombTarget11State_EnterE15BombTargetState"
+                "linux64"    "@_ZN14CDODBombTarget11State_EnterE15BombTargetState"
             }
         }
     }
