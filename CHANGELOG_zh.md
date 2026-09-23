@@ -1,8 +1,75 @@
 # 更新日志
 
-DODHooks 的所有重要变更都会记录在此文件中。
+本文件记录 DODHooks 的所有重要变更。
 
-格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，本项目采用 SourceMod 风格版本号，扩展针对 SourceMod 1.12 构建。
+## [1.6.3] - 2026-09-24
+
+### 核对结论（无需修改）
+
+- **已对当前服务端二进制（`server.dll`，PE 时间戳 `0x6AAA1368`，2026-09-16）
+  逐字节复核 gamedata：**
+  - 9 条 Windows x86 签名**全部唯一命中**，无歧义、无偏移漂移。
+  - `g_pObjectiveResource` 偏移 `67` 经反汇编确认落在 `CreateStandardEntities`
+    中创建 `dod_objective_resource` 那条 `mov [g_pObjectiveResource], eax`
+    指令的 4 字节操作数上。（偏移 40 是 `g_pPlayerManager`，**不要把 67 改成 40**。）
+  - 结论：**签名与偏移本次都不需要更新。**
+
+### 修复
+
+- **严重：单个 detour 失败不再导致整个扩展加载失败。** 原先 9 条签名中任意
+  一条解析失败，`SetupDetours()` 就返回 false，扩展直接加载不出来（`sm exts list`
+  里看不到）。现在失败只报警，扩展照常加载并打印
+  `DODHooks: loaded - N/9 detours active`，逐个列出失效的钩子。
+- **严重：回合状态切换被吞掉。** `RoundState` 用 `static iPreviousRoundState`
+  去重，遇到重复值直接 return 而**不调用原函数**，会丢掉合法的状态转换
+  （且缓存只在插件返回 `Plugin_Handled` 时更新），可能导致回合卡死。已移除该缓存。
+- **严重：forward 注册/释放顺序。**
+  - forward 改为在 `SDK_OnLoad` 中、**启用任何 detour 之前**创建（detour 回调
+    会解引用 forward 指针，先装钩子后建 forward 等于埋空指针）。
+  - `SDK_OnUnload` 改为**先拆 detour 再释放 forward**（原先顺序相反，detour
+    仍生效时 forward 已被释放）。
+- **`SDK_OnAllLoaded` 不再因 bintools 缺失而提前 return。** 原先会跳过 offset
+  解析和 `InitializeValveGlobals()`。现在只影响调用型 native。
+- **未解析的 sendprop 不再写坏内存。** `GetSendPropOffset` 失败返回 -1
+  （0xFFFFFFFF），native 会直接往这个地址写。现改为返回
+  `INVALID_SEND_PROP_OFFSET`，所有 native 先校验再写，并在加载时于控制台告警。
+- **`DOD_SetNumControlPoints` 缺少范围校验**，可写入任意值。已加 `0..MAX_CONTROL_POINTS` 校验。
+- **`dodhooks.inc` 兵种枚举整体错位 1。** inc 里写的是
+  `DODClass_None = 0, DODClass_Rifleman = 1 ... DODClass_Rocket = 6`，而游戏
+  （以及 `extension.h`）用的是 `None = -1, Rifleman = 0 ... Rocket = 5`
+  （已验证：`HandleCommand_JoinClass` 用 `-2` 判断随机兵种）。所有兵种都偏了 1。
+  现已与游戏对齐，两侧都加了防回归注释。
+
+### 变更
+
+- **更正：`bin/x64/server.dll` 确实是 DoD:S 的服务端二进制。** 之前"DoD:S 没有
+  64 位服务端"的说法是错的 —— 这个 x64 DLL 导出的 8 个符号与 x86 版完全一致
+  （`CDODBombDispenser`、`CAreaCapture`、`CWeaponDODBase`、`CreateInterface`、
+  `cvar`），只是调用约定换成了 x64 写法，并且同样包含 `dod_objective_resource`、
+  `DODRoundState: entering`、`BOMB_TARGET_ACTIVE` 等服务端字符串。它是一个
+  **完整可用的 64 位服务端二进制**。
+- **已预置 `windows64` 签名**，为将来 Valve 启用 64 位服务端做准备。已定位并
+  提供签名的有：`CreateStandardEntities`、`DODRespawn`、`AddWaveTime`、
+  `RoundState`、`PlayerState`、`BombTargetState`。
+  `VoiceCommand`、`JoinClass`、`PopHelmet`、`SetWinningTeam` 在 x64 中有多个
+  形态接近的候选函数、无法唯一确定，**故意不提供** —— 宁可让那一个 detour
+  报"未启用"，也不冒险钩错函数导致崩溃。
+- **x64 下 `g_pObjectiveResource` 的解析方式重写。** x86 存的是绝对地址
+  （`mov [abs32], eax`），而 x64 用 RIP 相对寻址（`mov [rip+disp32], rax`），
+  那 4 字节是**相对位移**而非指针。现在 x64 的 offset 指向位移字段，由
+  `vglobals.cpp` 计算 `target = pAddress + offset + 4 + disp32`。
+  （`windows64` 的 75 = 第二条 store = 目标资源；第一条 39 是 `g_pPlayerManager`。）
+
+### 新增
+
+- **`dodhooks.txt` 增加 `linux64` 键**：64 位 Linux 服务端会优先查 `linux64`，
+  缺失则符号解析静默失败。
+- **诊断用 native**：`DOD_IsAvailable()`、`DOD_GetDetourCount()`、
+  `DOD_GetDetourTotal()`、`DOD_IsObjectiveResourceReady()`。
+- **`dodhooks_test.sp` 诊断增强**：`dodhooks_test` 会打印 detour 健康度
+  （`Detours active: 9/9`）、objective resource 就绪状态、兵种枚举自检，
+  并说明每种失败模式代表什么；`dodhooks_status` 输出各 forward 触发次数，
+  在"钩子装上了但一个都没触发"时给出提示。
 
 ## [1.6.1] - 2026-08-24
 

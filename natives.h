@@ -38,6 +38,12 @@ cell_t Native_ResumeTimer(IPluginContext *pContext, const cell_t *Params);
 cell_t Native_SetTimeRemaining(IPluginContext *pContext, const cell_t *Params);
 cell_t Native_GetTimeRemaining(IPluginContext *pContext, const cell_t *Params);
 
+/* Diagnostic natives (help track down "extension won't load" reports) */
+cell_t Native_GetDetourCount(IPluginContext *pContext, const cell_t *Params);
+cell_t Native_GetDetourTotal(IPluginContext *pContext, const cell_t *Params);
+cell_t Native_IsObjectiveResourceReady(IPluginContext *pContext, const cell_t *Params);
+cell_t Native_IsAvailable(IPluginContext *pContext, const cell_t *Params);
+
 /* Game rules natives */
 cell_t Native_RespawnPlayer(IPluginContext *pContext, const cell_t *Params);
 cell_t Native_AddWaveTime(IPluginContext *pContext, const cell_t *Params);

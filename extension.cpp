@@ -40,6 +40,9 @@ IForward *g_pFwdBombTargetState = NULL;
 /* Globals */
 IGameConfig *g_pGameConf = NULL;
 
+uint32 g_iActiveDetours = 0;
+uint32 g_iFailedDetours = 0;
+
 ICvar *g_pCvar = NULL;
 ConCommand *g_pKillCmd = NULL;
 INetworkStringTableContainer *netstringtables = NULL;
@@ -180,12 +183,12 @@ DETOUR_DECL_MEMBER1(SetWinningTeam, void, int, iTeamIndex)
 
 DETOUR_DECL_MEMBER1(RoundState, void, int, iRoundState)
 {
-    static uint8 iPreviousRoundState = -1;
-
-    if (iRoundState == iPreviousRoundState)
-    {
-        return;
-    }
+    /* NOTE: an earlier version deduplicated consecutive round states here and
+     * returned *without* calling the original function. That swallowed legal
+     * State_Enter() transitions (e.g. PreRound -> RoundRunning -> ... ) and
+     * could stall the round. The dedup cache has been removed - every state
+     * change is forwarded to plugins and always reaches the original code
+     * unless a plugin explicitly returns Plugin_Handled. */
 
     cell_t Result = Pl_Continue;
     g_pFwdRoundState->PushCellByRef(&iRoundState);
@@ -193,8 +196,6 @@ DETOUR_DECL_MEMBER1(RoundState, void, int, iRoundState)
 
     if (Result >= Pl_Handled)
     {
-        iPreviousRoundState = iRoundState;
-
         return;
     }
 
@@ -275,10 +276,24 @@ bool CDODHooks::SDK_OnLoad(char *error, size_t maxlength, bool late)
     /* Initialize the detour manager */
     CDetourManager::Init(g_pSM->GetScriptingEngine(), g_pGameConf);
 
+    /* Register forwards BEFORE enabling any detour: each detour callback
+     * dereferences its forward pointer, so the forwards must exist before the
+     * first hook can possibly fire. */
+    RegisterForwards();
+
     /* Setup all detours */
     if (!SetupDetours(error, maxlength))
     {
         return false;
+    }
+
+    META_CONPRINTF("DODHooks: loaded - %u/%u detours active\n",
+                   g_iActiveDetours, g_iActiveDetours + g_iFailedDetours);
+
+    if (g_iFailedDetours)
+    {
+        META_CONPRINTF("DODHooks: %u detour(s) inactive - check addons/sourcemod/gamedata/dodhooks.txt\n",
+                       g_iFailedDetours);
     }
 
     return true;
@@ -304,11 +319,19 @@ void CDODHooks::SDK_OnUnload()
         g_pGameConf = NULL;
     }
 
+    /* Teardown detours FIRST: while a detour is installed its callback can
+     * fire at any moment and dereference the forward pointer. */
+    TeardownDetours();
+
     /* Unregister forwards */
     UnregisterForwards();
 
-    /* Teardown detours */
-    TeardownDetours();
+    /* Initialize valve globals */
+    g_pObjectiveResource = NULL;
+    g_pEntList = NULL;
+
+    g_iActiveDetours = 0;
+    g_iFailedDetours = 0;
 }
 
 void CDODHooks::SDK_OnAllLoaded()
@@ -319,8 +342,15 @@ void CDODHooks::SDK_OnAllLoaded()
 
     if (!g_pBinTools)
     {
-        META_CONPRINTF("DODHooks: Fatal Error: Failed to load bintools.\n");
-        return;
+        /* Not fatal: only the natives that call into game code
+         * (DOD_RespawnPlayer / DOD_AddWaveTime / ...) need bintools.
+         * Detours and forwards keep working. */
+        META_CONPRINTF("DODHooks: Warning - bintools unavailable; call-based natives disabled.\n");
+    }
+
+    if (!g_pSDKTools)
+    {
+        META_CONPRINTF("DODHooks: Warning - sdktools unavailable; GameRules-based natives disabled.\n");
     }
 
     if (!g_pGameClients)
@@ -354,8 +384,27 @@ void CDODHooks::SDK_OnAllLoaded()
     g_iOffset_TimeRemaining    = GetSendPropOffset("CDODRoundTimer", "m_flTimeRemaining");
     g_iOffset_TimerEndTime     = GetSendPropOffset("CDODRoundTimer", "m_flTimerEndTime");
 
-    /* Register forwards */
-    RegisterForwards();
+    /* Report unresolved send properties so broken natives are obvious in
+     * the console instead of silently corrupting entity memory. */
+    if (!IsValidOffset(g_iOffset_PlayerClass) ||
+        !IsValidOffset(g_iOffset_DesiredPlayerClass))
+    {
+        META_CONPRINTF("DODHooks: Warning - CDODPlayer class props unresolved; DOD_Get/SetPlayerClass disabled.\n");
+    }
+
+    if (!IsValidOffset(g_iOffset_NumControlPoints) ||
+        !IsValidOffset(g_iOffset_AlliesIcons) ||
+        !IsValidOffset(g_iOffset_CPIsVisible))
+    {
+        META_CONPRINTF("DODHooks: Warning - CDODObjectiveResource props unresolved; control point natives disabled.\n");
+    }
+
+    if (!IsValidOffset(g_iOffset_TimerPaused) ||
+        !IsValidOffset(g_iOffset_TimeRemaining) ||
+        !IsValidOffset(g_iOffset_TimerEndTime))
+    {
+        META_CONPRINTF("DODHooks: Warning - CDODRoundTimer props unresolved; timer natives disabled.\n");
+    }
 
     /* Initialize valve globals (g_pObjectiveResource, etc.) */
     InitializeValveGlobals();
@@ -407,7 +456,11 @@ void CDODHooks::UnregisterForwards()
 
 bool CDODHooks::SetupDetours(char *error, size_t maxlength)
 {
-    char szConfigError[255] = "";
+    /* No single detour failure is fatal any more - see CREATE_DETOUR in
+     * extension.h. The extension stays loaded so `sm exts list` shows it and
+     * the remaining hooks / natives keep working. */
+    g_iActiveDetours = 0;
+    g_iFailedDetours = 0;
 
     CREATE_DETOUR(g_pDetVoiceCommand,     VoiceCommand,     "VoiceCommand");
     CREATE_DETOUR(g_pDetJoinClass,        JoinClass,        "JoinClass");

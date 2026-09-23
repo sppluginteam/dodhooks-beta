@@ -9,17 +9,17 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/kittenks/dodhooks/actions/workflows/master.yaml">
-    <img src="https://github.com/kittenks/dodhooks/actions/workflows/master.yaml/badge.svg" alt="Build Status" />
+  <a href="https://github.com/sppluginteam/dodhooks-beta/actions/workflows/master.yaml">
+    <img src="https://github.com/sppluginteam/dodhooks-beta/actions/workflows/master.yaml/badge.svg" alt="Build Status" />
   </a>
-  <a href="https://github.com/kittenks/dodhooks/releases/latest">
-    <img src="https://img.shields.io/github/v/release/kittenks/dodhooks?style=flat-square&label=Latest%20Release" alt="Latest Release" />
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases/latest">
+    <img src="https://img.shields.io/github/v/release/sppluginteam/dodhooks-beta?style=flat-square&label=Latest%20Release" alt="Latest Release" />
   </a>
-  <a href="https://github.com/kittenks/dodhooks/releases">
-    <img src="https://img.shields.io/github/downloads/kittenks/dodhooks/total?style=flat-square&label=Downloads" alt="Total Downloads" />
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases">
+    <img src="https://img.shields.io/github/downloads/sppluginteam/dodhooks-beta/total?style=flat-square&label=Downloads" alt="Total Downloads" />
   </a>
-  <a href="https://github.com/kittenks/dodhooks/releases/latest">
-    <img src="https://img.shields.io/github/release-date/kittenks/dodhooks?style=flat-square&label=Released" alt="Release Date" />
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases/latest">
+    <img src="https://img.shields.io/github/release-date/sppluginteam/dodhooks-beta?style=flat-square&label=Released" alt="Release Date" />
   </a>
   <img src="https://img.shields.io/badge/SourceMod-1.12%20%2F%201.13-orange?style=flat-square" alt="SourceMod" />
   <img src="https://img.shields.io/badge/Platform-Windows%20%2F%20Linux-blue?style=flat-square" alt="Platform" />
@@ -31,27 +31,27 @@
 ## Download
 
 <p align="center">
-  <a href="https://github.com/kittenks/dodhooks/releases/latest">
-    <img src="https://img.shields.io/github/v/release/kittenks/dodhooks?style=for-the-badge&label=Latest%20Stable%20Release&color=brightgreen" alt="Latest Stable Release" />
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases/latest">
+    <img src="https://img.shields.io/github/v/release/sppluginteam/dodhooks-beta?style=for-the-badge&label=Latest%20Stable%20Release&color=brightgreen" alt="Latest Stable Release" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/kittenks/dodhooks/releases/latest">
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases/latest">
     <img src="https://img.shields.io/badge/🪟%20Download%20for%20Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" />
   </a>
   &nbsp;
-  <a href="https://github.com/kittenks/dodhooks/releases/latest">
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases/latest">
     <img src="https://img.shields.io/badge/🐧%20Download%20for%20Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download for Linux" />
   </a>
   &nbsp;
-  <a href="https://github.com/kittenks/dodhooks/releases/latest">
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases/latest">
     <img src="https://img.shields.io/badge/📦%20Download%20Source-4285F4?style=for-the-badge&logo=github&logoColor=white" alt="Download Source" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/kittenks/dodhooks/releases">
+  <a href="https://github.com/sppluginteam/dodhooks-beta/releases">
     <img src="https://img.shields.io/badge/📂%20View%20All%20Releases-gray?style=flat-square" alt="All Releases" />
   </a>
 </p>
@@ -124,7 +124,7 @@ its SourcePawn include file).
 
 ```bash
 # Clone the repository
-git clone https://github.com/kittenks/dodhooks.git
+git clone https://github.com/sppluginteam/dodhooks-beta.git
 cd dodhooks
 
 # Clone dependencies
@@ -145,7 +145,7 @@ The result is `dist/addons/sourcemod/extensions/` containing the 32-bit
 # Open "Developer Command Prompt for VS" (or any terminal; the script
 # locates vcvarsall.bat automatically).
 
-git clone https://github.com/kittenks/dodhooks.git
+git clone https://github.com/sppluginteam/dodhooks-beta.git
 cd dodhooks
 
 git clone --depth 1 --recurse-submodules -b 1.12-dev https://github.com/alliedmodders/metamod-source.git mmsource
@@ -314,6 +314,16 @@ The include file provides the following enumerations for type-safe development:
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+(Chinese: [CHANGELOG_zh.md](CHANGELOG_zh.md))
+
+## Troubleshooting
+
+Extension won't load, or loads but nothing happens? Start here:
+
+- English: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- Chinese: [TROUBLESHOOTING_zh.md](TROUBLESHOOTING_zh.md)
+
+Building from source: [BUILD.md](BUILD.md)
 
 ## License
 
@@ -325,5 +335,5 @@ GPL v2 - See [LICENSE](LICENSE) for details.
 - **ChesterSmitty** - Previous maintainer
 - **Apfelwurm** - CI improvements
 - **DNA-styx** - Gamedata file
-- **Kittenks** - Current maintainer (1.12/1.13 updates, build & packaging) - https://github.com/kittenks/dodhooks
+- **Kittenks** - Current maintainer (1.12/1.13 updates, build & packaging) - https://github.com/sppluginteam/dodhooks-beta
 - **AlliedModders** - SourceMod, Metamod:Source, AMBuild

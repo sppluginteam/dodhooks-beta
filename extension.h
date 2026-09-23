@@ -62,6 +62,20 @@ extern CSharedEdictChangeInfo *g_pSharedChangeInfo;
 
 extern INetworkStringTableContainer *netstringtables;
 
+/**
+ * Detour bookkeeping. A missing signature/symbol must no longer abort the
+ * whole extension load - the extension stays loaded and simply reports which
+ * hooks are inactive (see SDK_OnLoad / SetupDetours).
+ */
+extern uint32 g_iActiveDetours;
+extern uint32 g_iFailedDetours;
+
+/**
+ * Value returned by GetSendPropOffset() when a send property could not be
+ * resolved. Natives must check for this before touching entity memory.
+ */
+#define INVALID_SEND_PROP_OFFSET 0xFFFFFFFF
+
 extern uint32 g_iOffset_PlayerClass;
 extern uint32 g_iOffset_DesiredPlayerClass;
 
@@ -88,6 +102,12 @@ extern void **g_pObjectiveResource;
 /**
  * Macro to simplify detour creation with proper error reporting.
  * Compatible with both 32-bit and 64-bit builds.
+ *
+ * IMPORTANT: A single missing signature/symbol is no longer fatal. On 64-bit
+ * servers (windows64 / linux64) or after a game update, individual detours may
+ * be unavailable; the extension keeps loading so that `sm exts list` and the
+ * remaining hooks/natives still work, and the console shows exactly which
+ * detour failed.
  */
 #define CREATE_DETOUR(detour, name, gamedata) \
 	do { \
@@ -95,18 +115,12 @@ extern void **g_pObjectiveResource;
 		if (detour != NULL) \
 		{ \
 			detour->EnableDetour(); \
+			g_iActiveDetours++; \
 		} \
 		else \
 		{ \
-			if (szConfigError[0]) \
-			{ \
-				snprintf(error, maxlength, "Fatal Error: Unable to load detour - %s (%s)", gamedata, szConfigError); \
-			} \
-			else \
-			{ \
-				snprintf(error, maxlength, "Fatal Error: Unable to load detour - %s", gamedata); \
-			} \
-			return false; \
+			g_iFailedDetours++; \
+			META_CONPRINTF("DODHooks: Warning - detour \"%s\" not available (gamedata key missing, signature not found, or platform mismatch)\n", gamedata); \
 		} \
 	} while (0)
 
@@ -121,6 +135,17 @@ extern void **g_pObjectiveResource;
 
 /**
  * Player class enum - matches DoD:S internal values
+ */
+/**
+ * These values are the REAL game values (verified against the current
+ * server binary: HandleCommand_JoinClass() compares the incoming class
+ * against -2 for "random").
+ *
+ *   Random = -2, None = -1, Rifleman = 0 ... Rocket = 5, Size = 6
+ *
+ * WARNING: dodhooks.inc MUST use exactly the same numbering. An earlier
+ * revision of the include file declared DODClass_None = 0 / Rifleman = 1,
+ * which is off by one and silently shifts every class.
  */
 enum DODPlayerClass
 {
@@ -148,7 +173,9 @@ enum DODTeam
 };
 
 /**
- * Helper: get send property offset safely
+ * Helper: get send property offset safely.
+ * Returns INVALID_SEND_PROP_OFFSET when the property cannot be resolved -
+ * never write through the result without checking it first.
  */
 inline uint32 GetSendPropOffset(const char *szNetClass, const char *szPropName)
 {
@@ -156,12 +183,63 @@ inline uint32 GetSendPropOffset(const char *szNetClass, const char *szPropName)
 
     if (!g_pGameHelpers->FindSendPropInfo(szNetClass, szPropName, &SendPropInfo))
     {
-        META_CONPRINTF("Fatal Error: Unable to get offset: %s::%s!\n", szNetClass, szPropName);
-        return -1;
+        META_CONPRINTF("DODHooks: Warning - unable to get offset: %s::%s!\n", szNetClass, szPropName);
+        return INVALID_SEND_PROP_OFFSET;
     }
 
     return SendPropInfo.actual_offset;
 }
+
+/**
+ * Helper: true when a send property offset was resolved successfully.
+ */
+inline bool IsValidOffset(uint32 iOffset)
+{
+    return (iOffset != INVALID_SEND_PROP_OFFSET);
+}
+
+/**
+ * Native guards. Every native that touches entity memory through a send
+ * property offset must validate that offset first - if the game or a plugin
+ * renames/removes the property, writing through 0xFFFFFFFF would corrupt
+ * memory instead of returning a clean error to the plugin.
+ */
+#define CHECK_OFFSET(off) \
+    do { \
+        if (!IsValidOffset(off)) \
+        { \
+            return pContext->ThrowNativeError("Send property %s is unavailable on this server", #off); \
+        } \
+    } while (0)
+
+#define CHECK_TIMER_OFFSETS() \
+    do { \
+        if (!IsValidOffset(g_iOffset_TimerPaused) || \
+            !IsValidOffset(g_iOffset_TimeRemaining) || \
+            !IsValidOffset(g_iOffset_TimerEndTime)) \
+        { \
+            return pContext->ThrowNativeError("Round timer props are unavailable on this server"); \
+        } \
+    } while (0)
+
+/**
+ * Guards for natives that call into game code through bintools / sdktools.
+ */
+#define CHECK_BINTOOLS() \
+    do { \
+        if (!g_pBinTools) \
+        { \
+            return pContext->ThrowNativeError("bintools extension is not available"); \
+        } \
+    } while (0)
+
+#define CHECK_GAMERULES() \
+    do { \
+        if (!g_pSDKTools) \
+        { \
+            return pContext->ThrowNativeError("sdktools extension is not available"); \
+        } \
+    } while (0)
 
 /**
  * @brief Main extension class

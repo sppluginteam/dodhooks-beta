@@ -34,6 +34,8 @@ cell_t Native_GetPlayerClass(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Client index %d is not a valid player", Params[1]);
     }
 
+    CHECK_OFFSET(g_iOffset_PlayerClass);
+
     return OFFSET(int, pEntity, g_iOffset_PlayerClass);
 }
 
@@ -56,6 +58,8 @@ cell_t Native_SetPlayerClass(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Player class %d is not valid", Params[2]);
     }
 
+    CHECK_OFFSET(g_iOffset_PlayerClass);
+
     OFFSET(int, pEntity, g_iOffset_PlayerClass) = Params[2];
 
     return true;
@@ -74,6 +78,8 @@ cell_t Native_GetDesiredPlayerClass(IPluginContext *pContext, const cell_t *Para
     {
         return pContext->ThrowNativeError("Client index %d is not a valid player", Params[1]);
     }
+
+    CHECK_OFFSET(g_iOffset_DesiredPlayerClass);
 
     return OFFSET(int, pEntity, g_iOffset_DesiredPlayerClass);
 }
@@ -97,6 +103,8 @@ cell_t Native_SetDesiredPlayerClass(IPluginContext *pContext, const cell_t *Para
         return pContext->ThrowNativeError("Player class %d is not valid", Params[2]);
     }
 
+    CHECK_OFFSET(g_iOffset_DesiredPlayerClass);
+
     OFFSET(int, pEntity, g_iOffset_DesiredPlayerClass) = Params[2];
 
     return true;
@@ -119,6 +127,8 @@ cell_t Native_PopHelmet(IPluginContext *pContext, const cell_t *Params)
     {
         return pContext->ThrowNativeError("Client index %d is not a valid player", Params[1]);
     }
+
+    CHECK_BINTOOLS();
 
     /* Resolve the detour address once and cache the call wrapper */
     static ICallWrapper *pWrapper = NULL;
@@ -195,6 +205,13 @@ cell_t Native_SetNumControlPoints(IPluginContext *pContext, const cell_t *Params
         return pContext->ThrowNativeError("ObjectiveResource not available before map is loaded");
     }
 
+    CHECK_OFFSET(g_iOffset_NumControlPoints);
+
+    if (Params[1] < 0 || Params[1] > MAX_CONTROL_POINTS)
+    {
+        return pContext->ThrowNativeError("Control point count %d out of range (0-%d)", Params[1], MAX_CONTROL_POINTS);
+    }
+
     OFFSET(int, pObjectiveResource, g_iOffset_NumControlPoints) = Params[1];
 
     g_pGameEnts->BaseEntityToEdict(pObjectiveResource)->StateChanged(g_iOffset_NumControlPoints);
@@ -269,6 +286,12 @@ cell_t Native_SetCPIcons(IPluginContext *pContext, const cell_t *Params)
 
     edict_t *pEdict = g_pGameEnts->BaseEntityToEdict(pObjectiveResource);
 
+    CHECK_OFFSET(g_iOffset_AlliesIcons);
+    CHECK_OFFSET(g_iOffset_AxisIcons);
+    CHECK_OFFSET(g_iOffset_NeutralIcons);
+    CHECK_OFFSET(g_iOffset_TimerCapIcons);
+    CHECK_OFFSET(g_iOffset_BombedIcons);
+
     int arrayElement = static_cast<int>(Params[1]) * static_cast<int>(sizeof(int));
 
     if (Params[2])
@@ -323,6 +346,8 @@ cell_t Native_SetCPVisible(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Control point index %d is not valid", Params[1]);
     }
 
+    CHECK_OFFSET(g_iOffset_CPIsVisible);
+
     int arrayElement = static_cast<int>(Params[1]) * static_cast<int>(sizeof(int));
 
     OFFSET(int, pObjectiveResource, g_iOffset_CPIsVisible + arrayElement) = Params[2];
@@ -350,6 +375,8 @@ cell_t Native_PauseTimer(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Entity index %d is not a dod_round_timer", Params[1]);
     }
 
+    CHECK_TIMER_OFFSETS();
+
     if (!OFFSET(bool, pEntity, g_iOffset_TimerPaused))
     {
         OFFSET(float, pEntity, g_iOffset_TimeRemaining) = OFFSET(float, pEntity, g_iOffset_TimerEndTime) - g_pGlobals->curtime;
@@ -375,6 +402,8 @@ cell_t Native_ResumeTimer(IPluginContext *pContext, const cell_t *Params)
     {
         return pContext->ThrowNativeError("Entity index %d is not a dod_round_timer", Params[1]);
     }
+
+    CHECK_TIMER_OFFSETS();
 
     if (OFFSET(bool, pEntity, g_iOffset_TimerPaused))
     {
@@ -402,6 +431,8 @@ cell_t Native_SetTimeRemaining(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Entity index %d is not a dod_round_timer", Params[1]);
     }
 
+    CHECK_TIMER_OFFSETS();
+
     OFFSET(float, pEntity, g_iOffset_TimeRemaining) = sp_ctof(Params[2]);
     OFFSET(float, pEntity, g_iOffset_TimerEndTime) = g_pGlobals->curtime + sp_ctof(Params[2]);
 
@@ -424,6 +455,8 @@ cell_t Native_GetTimeRemaining(IPluginContext *pContext, const cell_t *Params)
     {
         return pContext->ThrowNativeError("Entity index %d is not a dod_round_timer", Params[1]);
     }
+
+    CHECK_TIMER_OFFSETS();
 
     float fTimeRemaining;
 
@@ -464,6 +497,8 @@ cell_t Native_RespawnPlayer(IPluginContext *pContext, const cell_t *Params)
 
     if (Params[2])
     {
+        CHECK_OFFSET(g_iOffset_DesiredPlayerClass);
+
         int iPlayerClass = OFFSET(int, pEntity, g_iOffset_DesiredPlayerClass);
 
         if (iPlayerClass == PlayerClass_None)
@@ -471,6 +506,8 @@ cell_t Native_RespawnPlayer(IPluginContext *pContext, const cell_t *Params)
             return pContext->ThrowNativeError("Player class is not valid (PlayerClass_None)");
         }
     }
+
+    CHECK_BINTOOLS();
 
     static ICallWrapper *pWrapper = NULL;
 
@@ -500,6 +537,9 @@ cell_t Native_AddWaveTime(IPluginContext *pContext, const cell_t *Params)
     {
         return pContext->ThrowNativeError("Team index %i is not valid", Params[1]);
     }
+
+    CHECK_BINTOOLS();
+    CHECK_GAMERULES();
 
     static ICallWrapper *pWrapper = NULL;
 
@@ -564,6 +604,9 @@ cell_t Native_SetWinningTeam(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Team index %d is not valid", Params[1]);
     }
 
+    CHECK_BINTOOLS();
+    CHECK_GAMERULES();
+
     static ICallWrapper *pWrapper = NULL;
 
     if (!pWrapper)
@@ -614,6 +657,9 @@ cell_t Native_SetWinningTeam(IPluginContext *pContext, const cell_t *Params)
 
 cell_t Native_SetRoundState(IPluginContext *pContext, const cell_t *Params)
 {
+    CHECK_BINTOOLS();
+    CHECK_GAMERULES();
+
     static ICallWrapper *pWrapper = NULL;
 
     if (!pWrapper)
@@ -676,6 +722,8 @@ cell_t Native_SetPlayerState(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Client index %d is not a valid player", Params[1]);
     }
 
+    CHECK_BINTOOLS();
+
     static ICallWrapper *pWrapper = NULL;
 
     if (!pWrapper)
@@ -732,6 +780,8 @@ cell_t Native_SetBombTargetState(IPluginContext *pContext, const cell_t *Params)
         return pContext->ThrowNativeError("Entity index %d is not a dod_bomb_target", Params[1]);
     }
 
+    CHECK_BINTOOLS();
+
     static ICallWrapper *pWrapper = NULL;
 
     if (!pWrapper)
@@ -775,6 +825,53 @@ cell_t Native_SetBombTargetState(IPluginContext *pContext, const cell_t *Params)
 }
 
 /* ============================================================================
+ * Diagnostic natives
+ *
+ * These exist purely so the test plugin (and server owners) can tell apart
+ * "extension not loaded", "gamedata missing", "g_pObjectiveResource not
+ * resolved" and "detours installed but not firing".
+ * ========================================================================== */
+
+/**
+ * Always returns 1 - lets a plugin distinguish "extension missing" from
+ * "extension loaded but broken".
+ */
+cell_t Native_IsAvailable(IPluginContext *pContext, const cell_t *Params)
+{
+    return 1;
+}
+
+/**
+ * Number of detours that were successfully created and enabled.
+ */
+cell_t Native_GetDetourCount(IPluginContext *pContext, const cell_t *Params)
+{
+    return static_cast<cell_t>(g_iActiveDetours);
+}
+
+/**
+ * Total number of detours the extension tried to create (active + failed).
+ */
+cell_t Native_GetDetourTotal(IPluginContext *pContext, const cell_t *Params)
+{
+    return static_cast<cell_t>(g_iActiveDetours + g_iFailedDetours);
+}
+
+/**
+ * True once g_pObjectiveResource has been resolved and points at a live
+ * dod_objective_resource entity (i.e. after a map has loaded).
+ */
+cell_t Native_IsObjectiveResourceReady(IPluginContext *pContext, const cell_t *Params)
+{
+    if (!g_pObjectiveResource)
+    {
+        return 0;
+    }
+
+    return (*g_pObjectiveResource != NULL) ? 1 : 0;
+}
+
+/* ============================================================================
  * Native dispatch table
  * ========================================================================== */
 
@@ -799,5 +896,9 @@ const sp_nativeinfo_t g_Natives[] =
     {"DOD_SetRoundState",          Native_SetRoundState},
     {"DOD_SetPlayerState",         Native_SetPlayerState},
     {"DOD_SetBombTargetState",     Native_SetBombTargetState},
+    {"DOD_IsAvailable",            Native_IsAvailable},
+    {"DOD_GetDetourCount",         Native_GetDetourCount},
+    {"DOD_GetDetourTotal",         Native_GetDetourTotal},
+    {"DOD_IsObjectiveResourceReady", Native_IsObjectiveResourceReady},
     {NULL, NULL},
 };
