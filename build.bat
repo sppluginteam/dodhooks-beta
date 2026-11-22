@@ -219,6 +219,14 @@ if exist "%SCRIPT_DIR%\sourcemod\scripting\include\dodhooks.inc" (
   echo   [WARN] sourcemod\scripting\include\dodhooks.inc not found, skipping.
 )
 
+REM Test plugin SOURCE only (no compiled .smx).
+if exist "%SCRIPT_DIR%\sourcemod\scripting\dodhooks_test.sp" (
+  copy /Y "%SCRIPT_DIR%\sourcemod\scripting\dodhooks_test.sp" "%DIST%\addons\sourcemod\scripting\" >nul
+  echo   [OK] dodhooks_test.sp ^(source only^)
+) else (
+  echo   [WARN] sourcemod\scripting\dodhooks_test.sp not found, skipping.
+)
+
 REM Server-level auto-load marker (zero-byte). Placed at the extensions/
 REM root so SourceMod auto-loads on BOTH 32-bit and 64-bit servers.
 if exist "%SCRIPT_DIR%\sourcemod\extensions\dodhooks.autoload" (

@@ -33,9 +33,7 @@ DODHooks fully supports **both** the 32-bit (`srcds.exe`) and 64-bit
 - 32-bit: extension loads from `extensions/dodhooks.ext.2.dods.dll`,
   all 9 detours install (`windows` signatures).
 - 64-bit: extension loads from `extensions/x64/dodhooks.ext.2.dods.dll`,
-  8 of 9 detours install (`windows64` signatures). Only `PopHelmet` has **no
-  unique byte pattern in the x64 binary**, so it is deliberately skipped with
-  a non-fatal warning rather than hooked at a wrong address. `g_pObjectiveResource`
+  **all 9 detours install** (`windows64` signatures). `g_pObjectiveResource`
   is resolved via RIP-relative addressing on x64 and works correctly.
 
 The single `dodhooks.autoload` marker at `extensions/` covers both
@@ -112,12 +110,13 @@ DODHooks: Warning - detour "PopHelmet" not available (...)
 | Value | Meaning |
 |---|---|
 | `9/9` | All hooks installed (normal on 32-bit) — the problem is elsewhere (plugin / game logic). |
-| `8/9` | Normal on **64-bit Windows**: `PopHelmet` has no unique x64 signature and is intentionally skipped. |
+| `9/9` | All hooks installed on both 32-bit and 64-bit — the problem is elsewhere. |
 | `0/9` | Gamedata loaded but nothing matched — `server.dll` version mismatch (game updated, or wrong binary). |
 | in between | Individual signatures broke — fix the keys named in the console. |
 
-> On 64-bit, `8/9` with the single `PopHelmet` warning is expected and
-> harmless — see section 0.
+> Since 1.6.5 all 9 detours are active on both architectures. If you still
+> see fewer on 64-bit, the server.dll build differs from the validated one —
+> check the PE timestamp.
 
 ## 2. Extension loaded, but the plugin does nothing
 

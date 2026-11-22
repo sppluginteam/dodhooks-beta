@@ -20,10 +20,9 @@
  *
  * Expected result on success:
  * [DODHOOKS-TEST] Extension auto-load: OK
- * [DODHOOKS-TEST] Detours active: N/N   (N = DOD_GetDetourTotal(), e.g. 9 on
- *                                        32-bit; on 64-bit Windows a few
- *                                        functions have no unique signature
- *                                        and are gracefully skipped)
+ * [DODHOOKS-TEST] Detours active: N/N   (N = DOD_GetDetourTotal(); since 1.6.5
+ *                                        all 9 detours are active on both
+ *                                        32-bit and 64-bit Windows)
  * [DODHOOKS-TEST] All natives resolved: OK
  * ... and when a player joins / uses voice command / respawns,
  * forward callback messages should appear.

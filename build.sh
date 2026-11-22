@@ -181,6 +181,15 @@ else
   echo "[INFO] created empty dodhooks.autoload marker."
 fi
 
+# Test plugin SOURCE only (no compiled .smx) - users compile with spcomp.
+if [[ -f "${SCRIPT_DIR}/sourcemod/scripting/dodhooks_test.sp" ]]; then
+  mkdir -p "${DIST}/addons/sourcemod/scripting"
+  cp -v "${SCRIPT_DIR}/sourcemod/scripting/dodhooks_test.sp" \
+        "${DIST}/addons/sourcemod/scripting/"
+else
+  echo "[WARN] sourcemod/scripting/dodhooks_test.sp not found."
+fi
+
 # ---------- Version ----------
 VERSION="$(grep -oP 'SMEXT_CONF_VERSION\s+"\K[^"]+' "${SCRIPT_DIR}/smsdk_config.h" || echo 1.0)"
 

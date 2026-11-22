@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.6.0/),
 and this project follows SourceMod-style versioning where the extension is
 built against SourceMod 1.12.
 
+## [1.6.5] - 2026-11-23
+
+### Fixed
+- **PopHelmet windows64 signature**: located via the CDODPlayer member
+  accessor (`lea rcx,[rdi+0x14d0]` + call) and the Vector `addss` sequence
+  plus a GetPlayerClass call. The extension now installs **all 9 detours on
+  both 32-bit and 64-bit** servers.
+
+### Changed
+- Release archives now ship the test plugin **source** (`dodhooks_test.sp`)
+  under `addons/sourcemod/scripting/` - no compiled `.smx` included; compile
+  it yourself with `spcomp` if needed.
+
 ## [1.6.4] - 2026-11-23
 
 ### Added

@@ -2,6 +2,18 @@
 
 本文件记录 DODHooks 的所有重要变更。
 
+## [1.6.5] - 2026-11-23
+
+### 修复
+- **PopHelmet 的 windows64 签名**：通过 CDODPlayer 成员访问序列
+  （\`lea rcx,[rdi+0x14d0]\` + call）与 Vector \`addss\` 运算 + GetPlayerClass
+  调用定位。现在 32 位和 64 位服务器上**全部 9 个 detour 都能安装**。
+
+### 变更
+- 发布压缩包现在包含测试插件**源码**（\`dodhooks_test.sp\`），位于
+  \`addons/sourcemod/scripting/\` —— 不含编译后的 \`.smx\`，需要时用
+  \`spcomp\` 自行编译。
+
 ## [1.6.4] - 2026-11-23
 
 ### 新增

@@ -126,6 +126,10 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x53\x56\x57\x8B\xF9\x8D\x8F\x2A\x2A\x2A\x2A"
+                /* x64: located by the CDODPlayer member accessor
+                 * (lea rcx,[rdi+0x14d0]; call g_pPlayerClass) plus the
+                 * Vector addss sequence, and a GetPlayerClass call. Unique. */
+                "windows64"  "\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x20\x33\xD2\x48\x8B\xF9\xE8\x62\xF8\xFF\xFF\x48\x8B"
                 "linux"      "@_ZN10CDODPlayer9PopHelmetE6VectorS0_"
                 "linux64"    "@_ZN10CDODPlayer9PopHelmetE6VectorS0_"
             }

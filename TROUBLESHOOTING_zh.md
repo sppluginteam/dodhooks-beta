@@ -29,7 +29,7 @@ x64: ?Touch@CDODBombDispenser@@UEAAXPEAVCBaseEntity@@@Z
 DODHooks **完整支持 32 位**（`srcds.exe`）和 **64 位**（`srcds_win64.exe`）服务端：
 
 - 32 位：扩展从 `extensions/dodhooks.ext.2.dods.dll` 加载，9 个 detour 全部安装（`windows` 签名）。
-- 64 位：扩展从 `extensions/x64/dodhooks.ext.2.dods.dll` 加载，9 个 detour 中安装 8 个（`windows64` 签名）。只有 `PopHelmet` 在 x64 二进制里**没有唯一字节模式**，因此被有意跳过并给出非致命警告，而不是挂到错误地址。`g_pObjectiveResource` 在 x64 上通过 RIP 相对寻址解析，工作正常。
+- 64 位：扩展从 `extensions/x64/dodhooks.ext.2.dods.dll` 加载，**9 个 detour 全部安装**（`windows64` 签名）。`g_pObjectiveResource` 在 x64 上通过 RIP 相对寻址解析，工作正常。
 
 `extensions/` 根目录的单个 `dodhooks.autoload` 标记同时覆盖两种架构。请确保加载了对应架构的 Metamod（x86 用 `addons/metamod/bin/server`，x64 用 `.../bin/win64/server`）。
 
@@ -97,7 +97,7 @@ DODHooks: Warning - detour "PopHelmet" not available (...)
 | 数值 | 含义 |
 |---|---|
 | `9/9` | 全部钩子就位（32 位正常），问题在别处（插件、游戏逻辑）。 |
-| `8/9` | **64 位 Windows 正常**：`PopHelmet` 没有唯一 x64 签名，被有意跳过。 |
+| `9/9` | 32 位和 64 位均全部就位，问题在别处。 |
 | `0/9` | gamedata 读到了但没一条匹配，说明 `server.dll` 版本对不上。 |
 | 介于两者之间 | 个别签名失效，按控制台点名的 key 去修。 |
 

@@ -24,6 +24,7 @@ folder_list = [
   ext_folder,
   'addons/sourcemod/gamedata',
   'addons/sourcemod/scripting/include',
+  'addons/sourcemod/scripting',
 ]
 if 'addons/sourcemod/extensions' not in folder_list:
   folder_list.append('addons/sourcemod/extensions')
@@ -52,6 +53,12 @@ CopyFiles('gamedata', 'addons/sourcemod/gamedata',
 # extension via its "public Extension __ext_dodhooks" block).
 CopyFiles('sourcemod/scripting/include', 'addons/sourcemod/scripting/include',
   [ 'dodhooks.inc', ]
+)
+
+# Test plugin SOURCE only (no compiled .smx) - users compile it themselves
+# with spcomp if they want to run the diagnostic.
+CopyFiles('sourcemod/scripting', 'addons/sourcemod/scripting',
+  [ 'dodhooks_test.sp', ]
 )
 
 # Server-level auto-load marker. SourceMod scans extensions/ for *.autoload
