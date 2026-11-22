@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.6.0/),
 and this project follows SourceMod-style versioning where the extension is
 built against SourceMod 1.12.
 
+## [1.6.4] - 2026-11-23
+
+### Added
+- **Full 64-bit (x64) support**: working `windows64` gamedata signatures for
+  `CreateStandardEntities`, `VoiceCommand`, `JoinClass`, `SetWinningTeam`.
+  The extension now installs 8 of 9 detours on `srcds_win64.exe`; `PopHelmet`
+  has no unique x64 byte pattern and is skipped with a non-fatal warning.
+- **Zero-byte `dodhooks.autoload` marker** shipped at `extensions/` root, so
+  SourceMod auto-loads DODHooks on both x86 and x64 servers without any plugin
+  `#include` or manual `sm exts load`.
+- `BUILD_zh.md`: Chinese build documentation (English `BUILD.md` split out).
+
+### Fixed
+- `CreateStandardEntities` windows64 signature was truncated (missing the 4th
+  byte of the RIP-relative displacement); now matches uniquely.
+- `g_pObjectiveResource` x64 comment address corrected to `0x1806B9210`.
+- Stale README warning about "must manually load the extension" removed.
+- Test plugin enum sanity check no longer emits compiler warnings; detour
+  count is now dynamic (was hardcoded 9/9).
+- CI release now triggers only on `v*` version tags instead of every push.
+
 ## [1.6.3] - 2026-09-24
 
 ### Verified (no change required)

@@ -2,6 +2,26 @@
 
 本文件记录 DODHooks 的所有重要变更。
 
+## [1.6.4] - 2026-11-23
+
+### 新增
+- **完整的 64 位（x64）支持**：`CreateStandardEntities`、`VoiceCommand`、
+  `JoinClass`、`SetWinningTeam` 的 `windows64` gamedata 签名可用。在
+  `srcds_win64.exe` 上现可安装 9 个 detour 中的 8 个；`PopHelmet` 在 x64
+  二进制中无唯一字节模式，被跳过并给出非致命警告。
+- **0 字节 `dodhooks.autoload` 标记**随包放在 `extensions/` 根目录，SourceMod
+  在 32 位和 64 位服务器上都会自动加载 DODHooks，无需插件 `#include` 或
+  手动 `sm exts load`。
+- `BUILD_zh.md`：中文构建文档（英文 `BUILD.md` 已拆分独立）。
+
+### 修复
+- `CreateStandardEntities` 的 windows64 签名原本被截断（缺少 RIP 相对位移的
+  第 4 字节），现已唯一命中。
+- `g_pObjectiveResource` 的 x64 注释地址更正为 `0x1806B9210`。
+- 移除了 README 中"必须手动加载扩展"的过时警告。
+- 测试插件的枚举自检不再产生编译警告；detour 数量改为动态获取（原写死 9/9）。
+- CI 发布现在只在 `v*` 版本 tag 触发，而非每次 push。
+
 ## [1.6.3] - 2026-09-24
 
 ### 核对结论（无需修改）
