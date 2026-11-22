@@ -221,19 +221,27 @@ addons/
 ```
 
 ### Loading the extension
-**Warning** Urgently Needs Fixing Extension Loading Issue 
-At present, there is no definitive solution to the issue of dodhooks failing to load properly; the temporary workaround is to enter the command sm exts load dodhooks.ext.2.dods in server.cfg.
 
-The extension is **auto-loaded** automatically: any plugin that
-`#include <dodhooks>` triggers SourceMod to load `dodhooks.ext` (resolved to
-`dodhooks.ext.2.dods`) at runtime. This is wired up by the
-`public Extension __ext_dodhooks` block inside `dodhooks.inc`, so **no**
-`.autoload` marker file or manual command is needed.
+DODHooks auto-loads using **two complementary mechanisms** — no manual
+`sm exts load` is ever needed:
+
+1. **Server-level marker (primary):** the release archive ships a zero-byte
+   `addons/sourcemod/extensions/dodhooks.autoload` file. At startup SourceMod
+   scans `extensions/` for `*.autoload` and loads the matching `.ext`
+   automatically. This works on **both** 32-bit and 64-bit servers — on x64
+   SourceMod resolves `extensions/x64/dodhooks.ext.2.dods.dll` from the same
+   marker. Make sure Metamod is loaded first (`meta list`).
+2. **Plugin-level include (fallback):** any plugin that `#include <dodhooks>`
+   also triggers the load via the `public Extension __ext_dodhooks` block in
+   `dodhooks.inc`.
 
 > **Important (v1.6.1 fix):** The `file` field in `dodhooks.inc` must be
 > `"dodhooks.ext"` (the base name). SourceMod automatically appends the game
 > suffix `.2.dods` and platform extension. Do **not** write
 > `"dodhooks.ext.2.dods"` — that breaks auto-load resolution.
+
+Verify with `sm exts list` (status should be "running") and `sm dhookstest`.
+See `TROUBLESHOOTING.md` if it does not load.
 
 To load it explicitly (e.g. for debugging), use:
 

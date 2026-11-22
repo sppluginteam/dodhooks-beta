@@ -25,16 +25,22 @@ server-only classes. The x64 DLL also contains server-side strings such as
 `Player sent bad joinclass syntax`. It is a **complete, usable 64-bit server
 binary**.
 
-### So why are we still using 32-bit signatures?
+### Architecture support (updated)
 
-- Current DoD:S deployments still run the **32-bit server** (there is no
-  publicly usable 64-bit srcds launch path yet), so SourceMod loads
-  `bin/server.dll`.
-- Therefore the **`windows` column is the one actually in use** today.
+DODHooks fully supports **both** the 32-bit (`srcds.exe`) and 64-bit
+(`srcds_win64.exe`) servers:
 
-**However, `windows64` signatures are shipped since 1.6.3** as a
-forward-looking measure — if/when Valve enables the 64-bit server, they are
-ready to go (assuming 64-bit SourceMod/Metamod builds exist by then).
+- 32-bit: extension loads from `extensions/dodhooks.ext.2.dods.dll`,
+  all 9 detours install (`windows` signatures).
+- 64-bit: extension loads from `extensions/x64/dodhooks.ext.2.dods.dll`,
+  8 of 9 detours install (`windows64` signatures). Only `PopHelmet` has **no
+  unique byte pattern in the x64 binary**, so it is deliberately skipped with
+  a non-fatal warning rather than hooked at a wrong address. `g_pObjectiveResource`
+  is resolved via RIP-relative addressing on x64 and works correctly.
+
+The single `dodhooks.autoload` marker at `extensions/` covers both
+architectures. Make sure the matching Metamod build is loaded
+(`addons/metamod/bin/server` for x86, `.../bin/win64/server` for x64).
 
 ### `g_pObjectiveResource` resolution differs on x64
 
@@ -105,9 +111,13 @@ DODHooks: Warning - detour "PopHelmet" not available (...)
 
 | Value | Meaning |
 |---|---|
-| `9/9` | All hooks installed — the problem is elsewhere (plugin / game logic). |
+| `9/9` | All hooks installed (normal on 32-bit) — the problem is elsewhere (plugin / game logic). |
+| `8/9` | Normal on **64-bit Windows**: `PopHelmet` has no unique x64 signature and is intentionally skipped. |
 | `0/9` | Gamedata loaded but nothing matched — `server.dll` version mismatch (game updated, or wrong binary). |
 | in between | Individual signatures broke — fix the keys named in the console. |
+
+> On 64-bit, `8/9` with the single `PopHelmet` warning is expected and
+> harmless — see section 0.
 
 ## 2. Extension loaded, but the plugin does nothing
 

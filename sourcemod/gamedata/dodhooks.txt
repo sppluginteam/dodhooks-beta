@@ -57,7 +57,7 @@
                  * 4-byte RIP displacement inside the SECOND
                  * 'mov [rip+disp], rax' - i.e. the store of the freshly
                  * created dod_objective_resource.
-                 * target = pAddress + 75 + 4 + disp32  (= 0x1806BC210 here)
+                 * target = pAddress + 75 + 4 + disp32  (= 0x1806B9210 here)
                  * The first store (offset 39) is g_pPlayerManager. */
                 "windows64" "75"
             }
@@ -73,7 +73,7 @@
             {
                 "library"    "server"
                 "windows"    "\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x6A\x00\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A\xA3\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x30\xC3"
-                "windows64"  "\x48\x83\xEC\x28\x45\x33\xC9\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x48\x8D\x15\x2B\xE2\x3D"
+                "windows64"  "\x48\x83\xEC\x28\x45\x33\xC9\x2A\x2A\x2A\x2A\x2A\x2A\x2A\x48\x8D\x15\x2B\xE2\x3D\x00"
             }
 
             /**
@@ -95,6 +95,9 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x81\xEC\xB0\x00\x00\x00\x53\x8B\xD9\x8B\x03"
+                /* x64: located by the unique "Voice.%s_%s" string xref;
+                 * prologue push rsi/push r14/sub rsp,0x138. Unique hit. */
+                "windows64"  "\x40\x56\x41\x56\x48\x81\xEC\x38\x01\x00\x00"
                 "linux"      "@_ZN10CDODPlayer12VoiceCommandEi"
                 "linux64"    "@_ZN10CDODPlayer12VoiceCommandEi"
             }
@@ -107,6 +110,10 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x53\x56\x57\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x83\xF8\x01"
+                /* x64: located via "#game_class_limit"/"player_changeclass"
+                 * string xrefs. The function matches the x86 sequence
+                 * (GetPlayerClass; cmp eax,1; cmp edx,-1). Unique hit. */
+                "windows64"  "\x48\x89\x5C\x24\x10\x48\x89\x74\x24\x18\x57\x41\x56\x41\x57\x48\x83\xEC\x40\x8B"
                 "linux"      "@_ZN10CDODPlayer23HandleCommand_JoinClassEi"
                 "linux64"    "@_ZN10CDODPlayer23HandleCommand_JoinClassEi"
             }
@@ -131,6 +138,10 @@
             {
                 "library"    "server"
                 "windows"    "\x55\x8B\xEC\x8B\x0D\x2A\x2A\x2A\x2A\x81\xEC\x80\x00\x00\x00"
+                /* x64: located via the "dod_round_win"+"dod_point_captured"
+                 * string xrefs; prologue push rbx/sub rsp,0x90 followed by
+                 * the g_pGameRules global load. Unique hit. */
+                "windows64"  "\x40\x53\x48\x81\xEC\x90\x00\x00\x00\x48\x8B\x0D"
                 "linux"      "@_ZN13CDODGameRules14SetWinningTeamEi"
                 "linux64"    "@_ZN13CDODGameRules14SetWinningTeamEi"
             }

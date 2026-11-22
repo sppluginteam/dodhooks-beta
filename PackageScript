@@ -16,11 +16,17 @@ else:
   ext_folder = 'addons/sourcemod/extensions'
 
 # Add any folders you need to this list.
+# The extensions ROOT is always created (even for x64 builds) because the
+# .autoload marker must sit next to the extensions/ folder itself - SourceMod
+# scans it on both 32-bit and 64-bit servers and resolves the correct binary
+# (x64 builds use the x64/ subfolder automatically).
 folder_list = [
   ext_folder,
   'addons/sourcemod/gamedata',
   'addons/sourcemod/scripting/include',
 ]
+if 'addons/sourcemod/extensions' not in folder_list:
+  folder_list.append('addons/sourcemod/extensions')
 
 # Create the distribution folder hierarchy.
 folder_map = {}
@@ -46,6 +52,13 @@ CopyFiles('gamedata', 'addons/sourcemod/gamedata',
 # extension via its "public Extension __ext_dodhooks" block).
 CopyFiles('sourcemod/scripting/include', 'addons/sourcemod/scripting/include',
   [ 'dodhooks.inc', ]
+)
+
+# Server-level auto-load marker. SourceMod scans extensions/ for *.autoload
+# at startup and loads the matching .ext automatically - this works even when
+# no plugin #includes <dodhooks>. One marker covers both architectures.
+CopyFiles('sourcemod/extensions', 'addons/sourcemod/extensions',
+  [ 'dodhooks.autoload', ]
 )
 
 # Copy binaries into the architecture-specific extensions folder.

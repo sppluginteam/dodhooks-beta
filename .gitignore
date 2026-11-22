@@ -1,0 +1,25 @@
+# Build output
+build_x86/
+build_x64/
+build/
+package/
+dist/
+*.zip
+*.tar.gz
+
+# Generated / copied files
+gamedata/dodhooks.txt
+*.smx
+*.obj
+*.pdb
+*.exp
+*.lib
+*.dll
+*.so
+
+# Python
+__pycache__/
+*.pyc
+
+# Local tooling / logs
+build_log.txt

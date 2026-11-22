@@ -141,11 +141,16 @@ echo   Building x86 (32-bit) and x64 (64-bit)
 echo ============================================
 
 REM ---------- Ensure gamedata is available for AMBuild ----------
-if not exist "%SCRIPT_DIR%\gamedata\dodhooks.txt" (
-  if exist "%SCRIPT_DIR%\sourcemod\gamedata\dodhooks.txt" (
-    echo [INFO] gamedata\dodhooks.txt not found in repo root, copying from sourcemod/gamedata
-    if not exist "%SCRIPT_DIR%\gamedata" mkdir "%SCRIPT_DIR%\gamedata"
-    copy /Y "%SCRIPT_DIR%\sourcemod\gamedata\dodhooks.txt" "%SCRIPT_DIR%\gamedata\dodhooks.txt" >nul
+REM sourcemod/gamedata/dodhooks.txt is the single source of truth. Always sync
+REM it to the repo-root gamedata\ that PackageScript reads, so edits to the
+REM canonical file can never be shadowed by a stale root copy.
+if exist "%SCRIPT_DIR%\sourcemod\gamedata\dodhooks.txt" (
+  if not exist "%SCRIPT_DIR%\gamedata" mkdir "%SCRIPT_DIR%\gamedata"
+  copy /Y "%SCRIPT_DIR%\sourcemod\gamedata\dodhooks.txt" "%SCRIPT_DIR%\gamedata\dodhooks.txt" >nul
+) else (
+  if not exist "%SCRIPT_DIR%\gamedata\dodhooks.txt" (
+    echo [ERROR] gamedata\dodhooks.txt not found.
+    goto :error
   )
 )
 
@@ -212,6 +217,16 @@ if exist "%SCRIPT_DIR%\sourcemod\scripting\include\dodhooks.inc" (
   echo   [OK] dodhooks.inc
 ) else (
   echo   [WARN] sourcemod\scripting\include\dodhooks.inc not found, skipping.
+)
+
+REM Server-level auto-load marker (zero-byte). Placed at the extensions/
+REM root so SourceMod auto-loads on BOTH 32-bit and 64-bit servers.
+if exist "%SCRIPT_DIR%\sourcemod\extensions\dodhooks.autoload" (
+  copy /Y "%SCRIPT_DIR%\sourcemod\extensions\dodhooks.autoload" "%DIST%\addons\sourcemod\extensions\" >nul
+  echo   [OK] dodhooks.autoload
+) else (
+  copy /Y NUL "%DIST%\addons\sourcemod\extensions\dodhooks.autoload" >nul
+  echo   [OK] dodhooks.autoload ^(created empty^)
 )
 
 REM ---------- Version ----------

@@ -76,12 +76,15 @@ if [[ ! -d "${HL2_ROOT}/hl2sdk-dods/public" ]]; then
 fi
 
 # ---------- Ensure gamedata is available for AMBuild ----------
-if [[ ! -f "${SCRIPT_DIR}/gamedata/dodhooks.txt" ]]; then
-  if [[ -f "${SCRIPT_DIR}/sourcemod/gamedata/dodhooks.txt" ]]; then
-    echo "[INFO] gamedata/dodhooks.txt not found in repo root, copying from sourcemod/gamedata"
-    mkdir -p "${SCRIPT_DIR}/gamedata"
-    cp "${SCRIPT_DIR}/sourcemod/gamedata/dodhooks.txt" "${SCRIPT_DIR}/gamedata/dodhooks.txt"
-  fi
+# sourcemod/gamedata/dodhooks.txt is the single source of truth. Always sync
+# it to the repo-root gamedata/ that PackageScript reads, so edits to the
+# canonical file can never be shadowed by a stale root copy.
+if [[ -f "${SCRIPT_DIR}/sourcemod/gamedata/dodhooks.txt" ]]; then
+  mkdir -p "${SCRIPT_DIR}/gamedata"
+  cp "${SCRIPT_DIR}/sourcemod/gamedata/dodhooks.txt" "${SCRIPT_DIR}/gamedata/dodhooks.txt"
+elif [[ ! -f "${SCRIPT_DIR}/gamedata/dodhooks.txt" ]]; then
+  echo "[ERROR] gamedata/dodhooks.txt not found (neither sourcemod/gamedata nor root)." >&2
+  exit 1
 fi
 
 # ---------- Ensure AMBuild ----------
@@ -166,6 +169,16 @@ if [[ -f "${SCRIPT_DIR}/sourcemod/scripting/include/dodhooks.inc" ]]; then
         "${DIST}/addons/sourcemod/scripting/include/"
 else
   echo "[WARN] sourcemod/scripting/include/dodhooks.inc not found."
+fi
+
+# Server-level auto-load marker (zero-byte). SourceMod scans it on both
+# 32-bit and 64-bit servers; keep it at the extensions/ root.
+if [[ -f "${SCRIPT_DIR}/sourcemod/extensions/dodhooks.autoload" ]]; then
+  cp -v "${SCRIPT_DIR}/sourcemod/extensions/dodhooks.autoload" \
+        "${DIST}/addons/sourcemod/extensions/"
+else
+  : > "${DIST}/addons/sourcemod/extensions/dodhooks.autoload"
+  echo "[INFO] created empty dodhooks.autoload marker."
 fi
 
 # ---------- Version ----------

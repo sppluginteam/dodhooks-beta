@@ -20,17 +20,20 @@
  *
  * Expected result on success:
  * [DODHOOKS-TEST] Extension auto-load: OK
- * [DODHOOKS-TEST] Detours active: 9/9
+ * [DODHOOKS-TEST] Detours active: N/N   (N = DOD_GetDetourTotal(), e.g. 9 on
+ *                                        32-bit; on 64-bit Windows a few
+ *                                        functions have no unique signature
+ *                                        and are gracefully skipped)
  * [DODHOOKS-TEST] All natives resolved: OK
  * ... and when a player joins / uses voice command / respawns,
  * forward callback messages should appear.
  *
  * Interpreting a failure:
  *   "Extension AUTO-LOAD: FAILED"      -> binary missing / wrong name / MM:Source issue
- *   "Detours active: 0/9"              -> gamedata resolved the file but no signature
+ *   "Detours active: 0/N"              -> gamedata resolved the file but no signature
  *                                         matched; check gamedata/dodhooks.txt and the
  *                                         server.dll build date
- *   "Detours active: 7/9"              -> some signatures matched; the console lists which
+ *   "Detours active: X/N" (X < N)      -> some signatures matched; the console lists which
  *   "ObjectiveResource ready: NO"      -> normal before a map loads; after map load it
  *                                         means CreateStandardEntities / the offset failed
  */
@@ -155,7 +158,11 @@ public Action Cmd_Test(int client, int args)
 	PrintToServer("[DODHOOKS-TEST] --- Enum Sanity (must match the game) ---");
 	PrintToServer("[DODHOOKS-TEST] DODClass_Random=%d DODClass_None=%d DODClass_Rifleman=%d DODClass_Rocket=%d",
 		DODClass_Random, DODClass_None, DODClass_Rifleman, DODClass_Rocket);
-	if (view_as<int>(DODClass_Rifleman) != 0 || view_as<int>(DODClass_None) != -1)
+	/* Compare through runtime variables so the compiler does not fold this
+	 * into a constant (which produced "redundant code" warnings). */
+	int rifleman = view_as<int>(DODClass_Rifleman);
+	int noneClass = view_as<int>(DODClass_None);
+	if (rifleman != 0 || noneClass != -1)
 	{
 		PrintToServer("[DODHOOKS-TEST] !! Class enum is off by one - classes will be shifted.");
 	}

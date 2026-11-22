@@ -17,9 +17,14 @@
 
 /**
  * Auto-loads the DODHooks extension whenever a plugin includes this file.
- * autoload is hardcoded to 1 — no AUTOLOAD_EXTENSIONS define needed.
+ * autoload is hardcoded to 1 - no AUTOLOAD_EXTENSIONS define needed.
  *
- * IMPORTANT: The "file" field must be the BASE name "dodhooks.ext" —
+ * This include-based load is a plugin-level fallback. Independently of it,
+ * the release ships a zero-byte extensions/dodhooks.autoload marker so the
+ * extension is loaded at server startup even when no plugin includes this
+ * file. Both mechanisms work on 32-bit and 64-bit servers.
+ *
+ * IMPORTANT: The "file" field must be the BASE name "dodhooks.ext" -
  * SourceMod automatically appends the game-specific suffix (.2.dods)
  * and platform extension (.so/.dll) when resolving the binary.
  * Do NOT write "dodhooks.ext.2.dods" here or auto-load will fail.

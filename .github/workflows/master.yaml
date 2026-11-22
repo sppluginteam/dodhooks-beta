@@ -137,7 +137,9 @@ jobs:
   # source zip, and publish them. Version is read from smsdk_config.h.
   # ------------------------------------------------------------------
   release:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master')
+    # Publish only on version tags, never on every push to master. This
+    # avoids "tag already exists" failures and keeps releases intentional.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: [windows, linux]
     runs-on: ubuntu-latest
     steps:

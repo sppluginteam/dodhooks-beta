@@ -1,69 +1,88 @@
-# 构建 DODHooks
+# Building DODHooks
 
-## 环境要求
+DODHooks builds **both 32-bit (x86) and 64-bit (x64)** binaries for Windows and Linux.
+The build scripts produce a release-ready `dist/` folder and an archive.
 
-- Python 3.8+，装 AMBuild：`pip install ambuild`（或从
-  <https://github.com/alliedmodders/ambuild> 源码安装）
-- 依赖（放在 `deps/` 下，或由环境变量指定）：
-  - SourceMod（`1.12-dev`）：`deps/sourcemod`
-  - Metamod:Source（`1.12-dev`）：`deps/mmsource`
-  - HL2SDK（DOD:S 分支）：`deps/hl2sdk-dods`
+## Requirements
 
-一键拉取依赖：
+- Python 3.8+ with AMBuild: `pip install ambuild` (or install from
+  <https://github.com/alliedmodders/ambuild> source).
+- Dependencies (place under `deps/`, or pass paths to the build scripts):
+  - SourceMod (`1.12-dev` branch) → `deps/sourcemod`
+  - Metamod:Source (`1.12-dev` branch) → `deps/mmsource`
+  - HL2SDK for Day of Defeat: Source (**latest `dods` branch**) → `deps/hl2sdk-dods`
+
+Fetch dependencies in one shot:
 
 ```bash
-./setup_dependencies.sh            # 克隆 sourcemod + mmsource
+./setup_dependencies.sh
 git clone --depth 1 -b dods https://github.com/alliedmodders/hl2sdk.git deps/hl2sdk-dods
 ```
 
-## Linux（本机编译，产出 x86 + x64 两个 .so）
+The CI workflow always clones the **latest** `alliedmodders/hl2sdk` `dods` branch,
+so GitHub Actions builds do not depend on a local SDK checkout.
 
-```bash
-./build_linux.sh          # 或 ./build.sh
-# 产物：dist/addons/sourcemod/extensions/dodhooks.ext.2.dods.so
-#       dist/addons/sourcemod/extensions/x64/dodhooks.ext.2.dods.so
-# 归档：DODHooks-<ver>-sm1.12-linux.tar.gz
+## Windows (native, builds x86 + x64 .dll)
+
+From a Visual Studio developer command prompt (or run `build.bat`, which locates
+`vcvarsall.bat` automatically):
+
+```bat
+build.bat
+REM output:
+REM   dist\addons\sourcemod\extensions\dodhooks.ext.2.dods.dll          (32-bit)
+REM   dist\addons\sourcemod\extensions\x64\dodhooks.ext.2.dods.dll      (64-bit)
+REM   DODHooks-<ver>-sm1.12-windows.zip
 ```
 
-32 位需要 multilib：`apt-get install gcc-multilib g++-multilib libstdc++6:i386`
+## Linux (native, builds x86 + x64 .so)
 
-## Linux（Docker，最省事）
+```bash
+./build.sh          # same as ./build_linux.sh
+# output:
+#   dist/addons/sourcemod/extensions/dodhooks.ext.2.dods.so          (32-bit)
+#   dist/addons/sourcemod/extensions/x64/dodhooks.ext.2.dods.so      (64-bit)
+#   DODHooks-<ver>-sm1.12-linux.tar.gz
+```
+
+32-bit Linux builds need multilib: `apt-get install gcc-multilib g++-multilib libstdc++6:i386`.
+
+## Linux (Docker — easiest, no local toolchain)
 
 ```bash
 ./build_linux_docker.sh
 ```
 
-用 AlliedModders 官方构建镜像，宿主机不需要装工具链。
+Uses the official AlliedModders build container.
 
-## Windows（本机编译，产出 x86 + x64 两个 .dll）
+## GitHub Actions
 
-在 VS 命令行（或先跑 `vsvars32.bat`）里：
+`.github/workflows/master.yaml` defines three jobs:
 
-```bat
-build.bat
-REM 产物：dist\addons\sourcemod\extensions\dodhooks.ext.2.dods.dll
-```
+- `windows` — builds Windows x86 + x64
+- `linux` — builds Linux x86 + x64
+- `release` — reads the version from `smsdk_config.h` and publishes
+  `DODHooks-<ver>-sm1.12-windows.zip`, `DODHooks-<ver>-sm1.12-linux.zip`
+  and `DODHooks-<ver>-source.zip` as a Release.
 
-## 自动化发布（GitHub Actions）
+To get Linux `.so` files without a local SDK, push to `master` and let the
+`linux` job run.
 
-`.github/workflows/master.yaml` 已配好三个 job：
+## Install / load
 
-- `windows` —— 构建 Windows x86 + x64
-- `linux` —— 构建 Linux x86 + x64
-- `release` —— 从 `smsdk_config.h` 读版本号，打包
-  `DODHooks-<ver>-sm1.12-windows.zip`、`DODHooks-<ver>-sm1.12-linux.zip`
-  和 `DODHooks-<ver>-source.zip` 并发布 Release
-
-**要拿到 Linux 的 .so，最可靠的方式就是推到 master 让 Actions 跑 linux job**，
-不需要本地准备 hl2sdk。
-
-## 部署
-
-把 `addons/` 整个目录拷进服务端根目录：
+Copy the `addons/` folder from `dist/` into your game directory. The archive
+already contains a zero-byte `dodhooks.autoload` marker at
+`addons/sourcemod/extensions/`, so SourceMod loads DODHooks automatically on
+both 32-bit and 64-bit servers — no plugin `#include` or manual
+`sm exts load` is required. Verify with:
 
 ```
-addons/sourcemod/extensions/dodhooks.ext.2.dods.so   (Linux 32 位)
-addons/sourcemod/extensions/x64/dodhooks.ext.2.dods.so (Linux 64 位)
-addons/sourcemod/gamedata/dodhooks.txt
-addons/sourcemod/scripting/include/dodhooks.inc
+meta list          ; Metamod must be loaded (win64 / win32 variant)
+sm exts list       ; DODHooks should show as "running"
+sm dhookstest      ; prints detour count and forward status
 ```
+
+See `README.md` for the full list of natives/forwards and
+`TROUBLESHOOTING.md` if the extension does not auto-load.
+
+_(中文文档见 [BUILD_zh.md](BUILD_zh.md))_

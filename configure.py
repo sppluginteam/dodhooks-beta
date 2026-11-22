@@ -5,7 +5,10 @@ DODHooks - Configure script
 Supports:
   - SourceMod 1.12 / 1.13
   - Metamod:Source 1.12 / 2.0
-  - 32-bit (x86) builds for Day of Defeat: Source
+  - 32-bit (x86) AND 64-bit (x64) builds for Day of Defeat: Source
+
+Select the target architecture with --arch=x86 (default) or --arch=x64.
+The build scripts (build.bat / build.sh) build both architectures in one run.
 """
 
 import sys

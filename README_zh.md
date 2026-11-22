@@ -212,9 +212,14 @@ addons/
 
 ### 加载扩展
 
-扩展会**自动加载**：任何 `#include <dodhooks>` 的插件都会在运行时由 SourceMod 自动加载 `dodhooks.ext`（解析为 `dodhooks.ext.2.dods`）。这一机制由 `dodhooks.inc` 中的 `public Extension __ext_dodhooks` 块实现，因此**不需要** `.autoload` 标记文件，也不需要手动执行命令。
+DODHooks 通过**两种互补机制**自动加载，永远不需要手动执行 `sm exts load`：
+
+1. **服务端级标记（主要方式）：** 发布包在 `addons/sourcemod/extensions/` 根目录包含一个 0 字节的 `dodhooks.autoload` 文件。SourceMod 启动时扫描 `extensions/` 下的 `*.autoload` 并自动加载对应的 `.ext`。这一个标记**同时适用于 32 位和 64 位**——在 64 位上 SourceMod 会从同一标记解析到 `extensions/x64/dodhooks.ext.2.dods.dll`。请确保先加载 Metamod（`meta list` 验证）。
+2. **插件级头文件（兜底）：** 任何 `#include <dodhooks>` 的插件也会通过 `dodhooks.inc` 中的 `public Extension __ext_dodhooks` 块触发加载。
 
 > **重要提示（v1.6.1 修复）：** `dodhooks.inc` 中的 `file` 字段必须为基础名 `"dodhooks.ext"`。SourceMod 会自动追加游戏后缀 `.2.dods` 和平台扩展名。**切勿**写为 `"dodhooks.ext.2.dods"`——这会导致自动加载解析失败。
+
+用 `sm exts list`（状态应为 "running"）和 `sm dhookstest` 验证。如果未加载，见 `TROUBLESHOOTING_zh.md`。
 
 如需手动加载（例如调试），使用：
 
@@ -303,7 +308,7 @@ sm exts load dodhooks
 - 中文：[TROUBLESHOOTING_zh.md](TROUBLESHOOTING_zh.md)
 - English：[TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
-从源码编译：[BUILD.md](BUILD.md)
+从源码编译：[BUILD_zh.md](BUILD_zh.md)
 
 ## 许可证
 
