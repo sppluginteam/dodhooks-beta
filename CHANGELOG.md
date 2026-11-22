@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.6.0/),
 and this project follows SourceMod-style versioning where the extension is
 built against SourceMod 1.12.
 
+## [1.6.6] - 2026-11-23
+
+### Fixed
+- **PopHelmet x64 detour crash**: the x64 MS ABI passes the two 12-byte Vector
+  args by hidden pointer; the by-value `DETOUR_DECL_MEMBER2` signature forwarded
+  garbage to the original function (`movsd [rsi]` access violation). The x64
+  build now skips the original call (the forward still fires) — a safe
+  degradation for a visual-only effect. Verified: 9/9 detours, no AV, test
+  plugin diagnostic passes on srcds_win64.exe.
+
 ## [1.6.5] - 2026-11-23
 
 ### Fixed
