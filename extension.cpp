@@ -126,8 +126,20 @@ DETOUR_DECL_MEMBER2(PopHelmet, void, Vector, vecVelocity, Vector, vecOrigin)
     cell_t Result = Pl_Continue;
 
     g_pFwdPopHelmet->PushCell(g_pEngine->IndexOfEdict(g_pGameEnts->BaseEntityToEdict((CBaseEntity *)this)));
+
+#if defined PLATFORM_X64 || defined _WIN64 || defined(__x86_64__)
+    // On x64 Windows the MS ABI passes 12-byte Vector args by hidden pointer,
+    // so the by-value DETOUR_DECL_MEMBER2 parameters above do NOT contain the
+    // real vectors. Reading them (e.g. &vecVelocity in PushArray) faults with
+    // an access violation. Use zeroed buffers instead - the edict index is the
+    // useful part of the forward; keep the array params for ABI compatibility.
+    cell_t zeroVec[3] = {0, 0, 0};
+    g_pFwdPopHelmet->PushArray(zeroVec, 3, SM_PARAM_COPYBACK);
+    g_pFwdPopHelmet->PushArray(zeroVec, 3, SM_PARAM_COPYBACK);
+#else
     g_pFwdPopHelmet->PushArray((cell_t *)&vecVelocity, 3, SM_PARAM_COPYBACK);
     g_pFwdPopHelmet->PushArray((cell_t *)&vecOrigin, 3, SM_PARAM_COPYBACK);
+#endif
     g_pFwdPopHelmet->Execute(&Result);
 
     if (Result >= Pl_Handled)
@@ -135,7 +147,17 @@ DETOUR_DECL_MEMBER2(PopHelmet, void, Vector, vecVelocity, Vector, vecOrigin)
         return;
     }
 
+#if defined PLATFORM_X64 || defined _WIN64 || defined(__x86_64__)
+    // The x64 MS ABI passes the two Vector args by hidden pointer; the
+    // DETOUR_DECL_MEMBER2 by-value signature cannot forward them correctly
+    // (DETOUR_MEMBER_CALL crashes dereferencing a bogus pointer). Since the
+    // forward above already ran, skip the original call on x64 rather than
+    // crash the server. PopHelmet only spawns a visual helmet-pop effect, so
+    // skipping it is a safe degradation.
+    return;
+#else
     DETOUR_MEMBER_CALL(PopHelmet)(vecVelocity, vecOrigin);
+#endif
 }
 
 DETOUR_DECL_MEMBER0(Respawn, void)

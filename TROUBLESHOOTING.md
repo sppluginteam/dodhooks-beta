@@ -69,14 +69,22 @@ In `dodhooks.txt`, `windows64` offset `75` is the displacement field of the
 
 ### Confidence level of the `windows64` signatures
 
-Uniquely resolved via string anchors and shipped: `CreateStandardEntities`,
-`DODRespawn`, `AddWaveTime`, `RoundState`, `PlayerState`, `BombTargetState`.
+Since 1.6.5 **all nine** `windows64` signatures are uniquely resolved and
+shipped. They were derived by byte-verifying each pattern against the
+validated x64 `server.dll` (PE timestamp `0x6AAA1366`), using unique string
+anchors and instruction sequences:
 
-`VoiceCommand`, `JoinClass`, `PopHelmet` and `SetWinningTeam` have multiple
-near-identical x64 candidates (e.g. the `dod_round_win` string is referenced by
-6 different functions) and could **not** be uniquely resolved. They are
-deliberately left out — better to report "detour inactive" than to hook the
-wrong function and crash the server.
+- `CreateStandardEntities` — `lea rdx,[rip+disp]` string-loading prologue
+- `VoiceCommand` — the `Voice.%s_%s` format string xref
+- `JoinClass` — `#game_class_limit` / `player_changeclass` string xrefs
+- `PopHelmet` — CDODPlayer member accessor (`lea rcx,[rdi+0x14d0]`) plus the
+  Vector `addss` sequence and a GetPlayerClass call
+- `SetWinningTeam` — the `dod_round_win` / `dod_point_captured` string xrefs
+- `DODRespawn`, `AddWaveTime`, `RoundState`, `PlayerState`, `BombTargetState`
+  — unique prologue byte patterns
+
+All nine match exactly once in the validated binary. If your `server.dll`
+differs (game update), some may stop matching — the console will name them.
 
 ## 1. Extension fails to load / missing from `sm exts list`
 

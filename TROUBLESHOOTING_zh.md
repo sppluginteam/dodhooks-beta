@@ -58,13 +58,22 @@ target = pAddress + offset + 4 + disp32
 
 ### windows64 签名的置信度
 
-已通过字符串锚点唯一确定并提供签名：`CreateStandardEntities`、`DODRespawn`、
-`AddWaveTime`、`RoundState`、`PlayerState`、`BombTargetState`。
+自 1.6.5 起**全部九个** `windows64` 签名都已唯一确定并提供。
+它们是通过对验证过的 x64 `server.dll`（PE 时间戳 `0x6AAA1366`）
+逐字节比对，利用唯一字符串锚点和指令序列得出的：
 
-`VoiceCommand`、`JoinClass`、`PopHelmet`、`SetWinningTeam` 在 x64 中有多个
-形态接近的候选函数（例如 `dod_round_win` 字符串同时被 6 个函数引用），
-**无法唯一确定**。这几个故意不提供签名 —— 宁可让那一个 detour 报"未启用"，
-也不冒险钩错函数把服务器搞崩。
+- `CreateStandardEntities` — `lea rdx,[rip+disp]` 字符串加载前导
+- `VoiceCommand` — `Voice.%s_%s` 格式字符串 xref
+- `JoinClass` — `#game_class_limit` / `player_changeclass` 字符串 xref
+- `PopHelmet` — CDODPlayer 成员访问 (`lea rcx,[rdi+0x14d0]`) 加
+  Vector `addss` 运算以及 GetPlayerClass 调用
+- `SetWinningTeam` — `dod_round_win` / `dod_point_captured` 字符串 xref
+- `DODRespawn`、`AddWaveTime`、`RoundState`、`PlayerState`、`BombTargetState`
+  — 唯一的前导字节模式
+
+这九个签名在验证过的二进制中均唯一命中一次。
+如果你的 `server.dll` 不同（游戏更新），某些签名可能失效 —
+控制台会列出具体名称。
 
 ## 1. 扩展加载失败 / `sm exts list` 里看不到
 
